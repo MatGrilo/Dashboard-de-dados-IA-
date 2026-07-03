@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Console de Qualidade · Vendas Porsche</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0C0F14; --panel:#141922; --panel2:#1B212C; --line:#262E3B; --line2:#333C4B;
+    --ink:#E9ECF1; --muted:#7E8899; --dim:#586374;
+    --red:#E0142B; --green:#2FBF71; --amber:#F5B301; --blue:#4FA3E3; --violet:#9B8CFF;
+    --sans:'Inter',system-ui,sans-serif;
+    --disp:'Space Grotesk',system-ui,sans-serif;
+    --mono:'IBM Plex Mono',ui-monospace,monospace;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);
+    font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;
+    background-image:
+      linear-gradient(var(--line) 1px,transparent 1px),
+      linear-gradient(90deg,var(--line) 1px,transparent 1px);
+    background-size:64px 64px;background-position:-1px -1px;
+  }
+  .wrap{max-width:1320px;margin:0 auto;padding:28px 22px 64px}
+  a{color:inherit}
+  /* ---------- header ---------- */
+  header.console{
+    display:flex;align-items:flex-end;justify-content:space-between;gap:20px;
+    padding-bottom:18px;margin-bottom:22px;border-bottom:1px solid var(--line2);flex-wrap:wrap;
+  }
+  .brand{display:flex;flex-direction:column;gap:6px}
+  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.28em;text-transform:uppercase;color:var(--red);font-weight:600}
+  h1{font-family:var(--disp);font-weight:700;font-size:clamp(26px,4vw,40px);margin:0;letter-spacing:-.02em;line-height:1}
+  .subtitle{color:var(--muted);font-size:13px;max-width:52ch}
+  .meta{display:flex;gap:26px;font-family:var(--mono);font-size:12px}
+  .meta div{display:flex;flex-direction:column;gap:2px;text-align:right}
+  .meta .k{color:var(--dim);font-size:10px;letter-spacing:.14em;text-transform:uppercase}
+  .meta .v{color:var(--ink);font-size:15px;font-weight:500}
+  /* ---------- top row: gauge + kpis ---------- */
+  .toprow{display:grid;grid-template-columns:300px 1fr;gap:16px;margin-bottom:16px}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:6px}
+  .panel-h{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--line)}
+  .panel-h .t{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+  .panel-h .tag{font-family:var(--mono);font-size:10px;color:var(--dim);letter-spacing:.1em}
+  .gauge-card{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:18px 16px 22px}
+  .gauge-read{font-family:var(--mono);font-weight:600;font-size:46px;line-height:1;margin-top:-58px;letter-spacing:-.02em}
+  .gauge-sub{font-family:var(--sans);font-size:12px;color:var(--muted);margin-top:6px;letter-spacing:.02em}
+  .gauge-frac{font-family:var(--mono);font-size:13px;color:var(--dim);margin-top:2px}
+  .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  .kpi{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:16px 18px;position:relative;overflow:hidden}
+  .kpi::before{content:"";position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--accent,var(--blue))}
+  .kpi .lab{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
+  .kpi .val{font-family:var(--disp);font-weight:500;font-size:27px;letter-spacing:-.01em;margin-top:8px;line-height:1}
+  .kpi .note{font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:6px}
+  /* ---------- filters ---------- */
+  .filters{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:16px 0;padding:14px 16px;background:var(--panel);border:1px solid var(--line);border-radius:6px}
+  .filters .fl{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);margin-right:2px}
+  input[type=search],select{
+    font-family:var(--sans);font-size:13px;color:var(--ink);background:var(--panel2);
+    border:1px solid var(--line2);border-radius:4px;padding:7px 10px;outline:none;transition:border-color .15s
+  }
+  input[type=search]{min-width:210px}
+  input[type=search]::placeholder{color:var(--dim)}
+  input:focus,select:focus{border-color:var(--blue)}
+  select{cursor:pointer;appearance:none;padding-right:26px;
+    background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);
+    background-position:calc(100% - 14px) 52%,calc(100% - 9px) 52%;background-size:5px 5px,5px 5px;background-repeat:no-repeat}
+  .toggle{display:inline-flex;align-items:center;gap:7px;font-size:12px;color:var(--muted);cursor:pointer;user-select:none;
+    padding:7px 11px;border:1px solid var(--line2);border-radius:4px;background:var(--panel2);font-family:var(--sans)}
+  .toggle input{accent-color:var(--amber);cursor:pointer}
+  .toggle.on{color:var(--ink);border-color:var(--amber)}
+  .btn-reset{margin-left:auto;font-family:var(--mono);font-size:11px;letter-spacing:.08em;color:var(--muted);
+    background:transparent;border:1px solid var(--line2);border-radius:4px;padding:7px 12px;cursor:pointer;transition:.15s}
+  .btn-reset:hover{color:var(--ink);border-color:var(--red)}
+  /* ---------- charts ---------- */
+  .charts{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+  .chart-body{padding:16px 18px}
+  svg{display:block;width:100%;overflow:visible}
+  .axis{stroke:var(--line2);stroke-width:1}
+  .glabel{font-family:var(--mono);font-size:10px;fill:var(--muted)}
+  .gval{font-family:var(--mono);font-size:10px;fill:var(--dim)}
+  .bar{transition:opacity .15s}
+  .bar:hover{opacity:.78}
+  .legend{display:flex;flex-wrap:wrap;gap:12px 16px;margin-top:12px;font-family:var(--mono);font-size:11px;color:var(--muted)}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .dot{width:9px;height:9px;border-radius:2px;display:inline-block}
+  /* ---------- table ---------- */
+  .tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:6px;background:var(--panel)}
+  table{border-collapse:collapse;width:100%;min-width:1180px}
+  thead th{position:sticky;top:0;background:var(--panel2);z-index:2}
+  th{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);
+    text-align:left;padding:11px 12px;border-bottom:1px solid var(--line2);white-space:nowrap;cursor:pointer;user-select:none}
+  th:hover{color:var(--ink)}
+  th .arw{color:var(--blue);margin-left:3px}
+  td{font-family:var(--mono);font-size:12px;padding:9px 12px;border-bottom:1px solid var(--line);white-space:nowrap;color:var(--ink)}
+  tbody tr:hover td{background:rgba(79,163,227,.05)}
+  td.num{text-align:right}
+  td.muted{color:var(--muted)}
+  .cell-null{color:var(--amber)!important;background:rgba(245,179,1,.10);font-style:italic}
+  .pill{display:inline-block;padding:2px 8px;border-radius:100px;font-size:10px;font-family:var(--mono);letter-spacing:.02em;border:1px solid transparent}
+  .flag{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--amber);box-shadow:0 0 0 3px rgba(245,179,1,.16)}
+  .rowcount{font-family:var(--mono);font-size:11px;color:var(--dim);padding:10px 14px;text-align:right}
+  /* ---------- quarantine ---------- */
+  .qgrid{margin-top:16px}
+  .reason{color:var(--red)}
+  /* section titles */
+  .sect{font-family:var(--disp);font-weight:500;font-size:15px;letter-spacing:.01em;margin:26px 0 12px;display:flex;align-items:center;gap:10px}
+  .sect::before{content:"";width:14px;height:2px;background:var(--red)}
+  .sect .c{font-family:var(--mono);font-size:11px;color:var(--dim);font-weight:400}
+  footer{margin-top:40px;padding-top:18px;border-top:1px solid var(--line);font-family:var(--mono);font-size:11px;color:var(--dim);display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+  @media(max-width:920px){
+    .toprow{grid-template-columns:1fr}
+    .charts{grid-template-columns:1fr}
+    .kpis{grid-template-columns:repeat(2,1fr)}
+  }
+  @media(max-width:520px){.kpis{grid-template-columns:1fr}}
+  @media(prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="console">
+    <div class="brand">
+      <span class="eyebrow">Console de Qualidade de Dados</span>
+      <h1>Vendas Porsche</h1>
+      <span class="subtitle">Base tratada pelo agente determinístico. Campos irrecuperáveis viram <code style="color:var(--amber);font-family:var(--mono)">null</code> e vão para a quarentena — a linha nunca é descartada.</span>
+    </div>
+    <div class="meta">
+      <div><span class="k">Dataset</span><span class="v" style="font-size:12px">db_psc_25354543</span></div>
+      <div><span class="k">Grão</span><span class="v" id="m-rows">—</span></div>
+      <div><span class="k">Colunas</span><span class="v">15</span></div>
+    </div>
+  </header>
+
+  <!-- gauge + kpis -->
+  <div class="toprow">
+    <div class="panel gauge-card">
+      <div class="panel-h" style="width:100%;border:0;padding:0 0 8px">
+        <span class="t">Integridade</span><span class="tag" id="g-tag">— / —</span>
+      </div>
+      <div id="gauge"></div>
+      <div class="gauge-read" id="g-pct">—</div>
+      <div class="gauge-sub">linhas 100% limpas</div>
+      <div class="gauge-frac" id="g-frac">—</div>
+    </div>
+    <div class="kpis" id="kpis"></div>
+  </div>
+
+  <!-- filters -->
+  <div class="filters" id="filters">
+    <span class="fl">Filtros</span>
+    <input type="search" id="q" placeholder="Buscar cliente, vendedor, cidade…" aria-label="Buscar">
+    <select id="f-line" aria-label="Linha de modelo"></select>
+    <select id="f-pay" aria-label="Forma de pagamento"></select>
+    <select id="f-del" aria-label="Status de entrega"></select>
+    <select id="f-state" aria-label="Estado"></select>
+    <label class="toggle" id="t-quar"><input type="checkbox" id="c-quar">só com quarentena</label>
+    <label class="toggle" id="t-susp"><input type="checkbox" id="c-susp">só suspeitos</label>
+    <button class="btn-reset" id="reset">limpar</button>
+  </div>
+
+  <!-- charts -->
+  <div class="charts">
+    <div class="panel"><div class="panel-h"><span class="t">Vendas por linha de modelo</span><span class="tag">contagem</span></div><div class="chart-body" id="ch-line"></div></div>
+    <div class="panel"><div class="panel-h"><span class="t">Receita por mês</span><span class="tag">USD · sale_date</span></div><div class="chart-body" id="ch-month"></div></div>
+  </div>
+  <div class="charts">
+    <div class="panel"><div class="panel-h"><span class="t">Forma de pagamento</span><span class="tag">enum</span></div><div class="chart-body" id="ch-pay"></div></div>
+    <div class="panel"><div class="panel-h"><span class="t">Status de entrega</span><span class="tag">enum</span></div><div class="chart-body" id="ch-del"></div></div>
+  </div>
+  <div class="charts">
+    <div class="panel"><div class="panel-h"><span class="t">Distribuição de preço</span><span class="tag">USD · faixas de 25k</span></div><div class="chart-body" id="ch-price"></div></div>
+    <div class="panel"><div class="panel-h"><span class="t">Top estados</span><span class="tag">USPS</span></div><div class="chart-body" id="ch-state"></div></div>
+  </div>
+
+  <!-- table -->
+  <div class="sect">Registros <span class="c" id="tbl-count"></span></div>
+  <div class="tablewrap">
+    <table id="tbl"><thead id="thead"></thead><tbody id="tbody"></tbody></table>
+    <div class="rowcount" id="rowcount"></div>
+  </div>
+
+  <!-- quarantine -->
+  <div class="sect qgrid">Log de quarentena <span class="c">campo zerado + motivo · schema §6</span></div>
+  <div class="tablewrap">
+    <table id="qtbl"><thead>
+      <tr><th>sale_id</th><th>column</th><th>raw_value</th><th>reason</th></tr>
+    </thead><tbody id="qbody"></tbody></table>
+  </div>
+
+  <footer>
+    <span>Agente determinístico · quarentena por campo · sem adivinhação</span>
+    <span id="foot-stamp"></span>
+  </footer>
+</div>
+
+<script>
+/* eslint-disable */
+const DATA = {"clean": [{"sale_id": 6, "sale_date": null, "customer_name": "Michael Adams", "porsche_model": "718 Cayman", "model_line": "718", "model_year": 2022, "sale_price_usd": 79500, "mileage_miles": 9800, "mileage_unit_raw": "miles", "mileage_suspect": false, "payment_method": "credit_card", "city": "Boston", "state": "MA", "salesperson": "Kevin", "delivery_status": "delivered"}, {"sale_id": 7, "sale_date": "2024-03-14", "customer_name": "Sophia Miller", "porsche_model": "911 Turbo S", "model_line": "911", "model_year": 2024, "sale_price_usd": 235000, "mileage_miles": 1200, "mileage_unit_raw": "miles", "mileage_suspect": false, "payment_method": "bank_transfer", "city": "Seattle", "state": "WA", "salesperson": "Amanda Scott", "delivery_status": "delivered"}, {"sale_id": 8, "sale_date": "2024-04-18", "customer_name": "Daniel-Jones", "porsche_model": "Cayenne Coupe", "model_line": "Cayenne", "model_year": 2023, "sale_price_usd": 112750, "mileage_miles": 6400, "mileage_unit_raw": "miles", "mileage_suspect": false, "payment_method": "financing", "city": "Austin", "state": "TX", "salesperson": "Brian Hall", "delivery_status": "in_transit"}, {"sale_id": 9, "sale_date": null, "customer_name": "Olivia Brown", "porsche_model": "Macan S", "model_line": "Macan", "model_year": 2021, "sale_price_usd": 68900, "mileage_miles": 28, "mileage_unit_raw": "miles", "mileage_suspect": true, "payment_method": "cash", "city": "Denver", "state": "CO", "salesperson": "Jessica", "delivery_status": "pending"}, {"sale_id": 10, "sale_date": "2024-05-22", "customer_name": "Ethan Wilson", "porsche_model": "Taycan 4S", "model_line": "Taycan", "model_year": 2024, "sale_price_usd": 121000, "mileage_miles": 0, "mileage_unit_raw": "miles", "mileage_suspect": false, "payment_method": "bank_transfer", "city": "Los Angeles", "state": "CA", "salesperson": "Thomas King", "delivery_status": "delivered"}, {"sale_id": 11, "sale_date": "2024-08-06", "customer_name": "Ava Martinez", "porsche_model": "Panamera 4", "model_line": "Panamera", "model_year": 2023, "sale_price_usd": 104500, "mileage_miles": 14500, "mileage_unit_raw": "miles", "mileage_suspect": false, "payment_method": "credit_card", "city": "Miami", "state": "FL", "salesperson": "Lisa Ray", "delivery_status": "cancelled"}, {"sale_id": 12, "sale_date": "2024-07-11", "customer_name": "Noah Davis", "porsche_model": "911 Carrera S", "model_line": "911", "model_year": 2020, "sale_price_usd": 96300, "mileage_miles": 41000, "mileage_unit_raw": "miles", "mileage_suspect": false, "payment_method": "lease", "city": "New York", "state": "NY", "salesperson": "Mark Evans", "delivery_status": "delivered"}, {"sale_id": 13, "sale_date": "2024-07-15", "customer_name": "Isabella Garcia", "porsche_model": "Cayenne E-Hybrid", "model_line": "Cayenne", "model_year": 2022, "sale_price_usd": 89750, "mileage_miles": 11744, "mileage_unit_raw": "km", "mileage_suspect": false, "payment_method": "bank_transfer", "city": "San Diego", "state": "CA", "salesperson": "Nancy Reed", "delivery_status": "pending"}, {"sale_id": 14, "sale_date": "2024-08-19", "customer_name": "Liam Rodriguez", "porsche_model": "718 Boxster", "model_line": "718", "model_year": 2021, "sale_price_usd": 73500, "mileage_miles": 22300, "mileage_unit_raw": "miles", "mileage_suspect": false, "payment_method": "debit_card", "city": "Chicago", "state": "IL", "salesperson": "George Bell", "delivery_status": "in_transit"}, {"sale_id": 15, "sale_date": "2024-09-02", "customer_name": "Mia Hernandez", "porsche_model": "Macan GTS", "model_line": "Macan", "model_year": 2024, "sale_price_usd": 95000, "mileage_miles": 3500, "mileage_unit_raw": "miles", "mileage_suspect": false, "payment_method": "financing", "city": "Phoenix", "state": "AZ", "salesperson": "Helen Brooks", "delivery_status": "in_transit"}, {"sale_id": 16, "sale_date": "2024-09-17", "customer_name": "James Lopez", "porsche_model": "Taycan Turbo", "model_line": "Taycan", "model_year": 2023, "sale_price_usd": 153200.5, "mileage_miles": 11, "mileage_unit_raw": "miles", "mileage_suspect": true, "payment_method": "bank_transfer", "city": "Dallas", "state": "TX", "salesperson": "Samuel Price", "delivery_status": "delivered"}, {"sale_id": 17, "sale_date": null, "customer_name": "Charlotte Young", "porsche_model": "911 GT3", "model_line": "911", "model_year": 2024, "sale_price_usd": 241000, "mileage_miles": 750, "mileage_unit_raw": "miles", "mileage_suspect": false, "payment_method": "bank_transfer", "city": "Las Vegas", "state": "NV", "salesperson": "Peter Ford", "delivery_status": "pending"}, {"sale_id": 18, "sale_date": "2024-05-11", "customer_name": "Benjamin Allen", "porsche_model": "Panamera Turbo S", "model_line": "Panamera", "model_year": 2022, "sale_price_usd": 132000, "mileage_miles": 19250, "mileage_unit_raw": "miles", "mileage_suspect": false, "payment_method": "cash", "city": "San Jose", "state": "CA", "salesperson": "Angela Green", "delivery_status": "delivered"}, {"sale_id": 19, "sale_date": "2024-12-12", "customer_name": "Amelia King", "porsche_model": "Cayenne Turbo GT", "model_line": "Cayenne", "model_year": 2024, "sale_price_usd": 188000, "mileage_miles": 2100, "mileage_unit_raw": "miles", "mileage_suspect": false, "payment_method": "crypto", "city": "Houston", "state": "TX", "salesperson": "Victor Stone", "delivery_status": "awaiting"}, {"sale_id": 20, "sale_date": "2024-12-25", "customer_name": "Lucas Wright", "porsche_model": "911 Carrera Cabriolet", "model_line": "911", "model_year": 2023, "sale_price_usd": 127800, "mileage_miles": 12000, "mileage_unit_raw": "miles", "mileage_suspect": false, "payment_method": "credit_card", "city": "Atlanta", "state": "GA", "salesperson": "Rachel Turner", "delivery_status": "delivered"}, {"sale_id": 21, "sale_date": "2025-01-06", "customer_name": "Harper Scott", "porsche_model": "Macan", "model_line": "Macan", "model_year": 2021, "sale_price_usd": 58900, "mileage_miles": 33700, "mileage_unit_raw": "miles", "mileage_suspect": false, "payment_method": "bank_transfer", "city": "Orlando", "state": "FL", "salesperson": "Chris Moore", "delivery_status": "pending"}, {"sale_id": 22, "sale_date": null, "customer_name": "Henry Torres", "porsche_model": "718 Spyder RS", "model_line": "718", "model_year": 2024, "sale_price_usd": 164000, "mileage_miles": 900, "mileage_unit_raw": "miles", "mileage_suspect": false, "payment_method": "financing", "city": "Portland", "state": "OR", "salesperson": "Laura Hill", "delivery_status": "in_transit"}, {"sale_id": 23, "sale_date": "2025-02-14", "customer_name": "Evelyn Nguyen", "porsche_model": "Taycan Cross Turismo", "model_line": "Taycan", "model_year": 2023, "sale_price_usd": 118500, "mileage_miles": 7800, "mileage_unit_raw": "miles", "mileage_suspect": false, "payment_method": "bank_transfer", "city": "Charlotte", "state": "NC", "salesperson": "Martin Young", "delivery_status": "delivered"}, {"sale_id": 24, "sale_date": null, "customer_name": "Alexander Flores", "porsche_model": "Cayenne S", "model_line": "Cayenne", "model_year": 2022, "sale_price_usd": 91300, "mileage_miles": 16000, "mileage_unit_raw": "miles", "mileage_suspect": false, "payment_method": "credit_card", "city": "Nashville", "state": "TN", "salesperson": "Diana Cooper", "delivery_status": "pending"}, {"sale_id": 25, "sale_date": "2025-03-21", "customer_name": "Abigail Carter", "porsche_model": "911 Targa 4S", "model_line": "911", "model_year": 2024, "sale_price_usd": 158750, "mileage_miles": 2500, "mileage_unit_raw": "miles", "mileage_suspect": false, "payment_method": "lease", "city": "Minneapolis", "state": "MN", "salesperson": "Steve Gray", "delivery_status": "delivered"}, {"sale_id": 26, "sale_date": "2025-03-28", "customer_name": "Jack Mitchell", "porsche_model": "Panamera", "model_line": "Panamera", "model_year": 2020, "sale_price_usd": 72000, "mileage_miles": 49000, "mileage_unit_raw": "miles", "mileage_suspect": false, "payment_method": "bank_transfer", "city": "Philadelphia", "state": "PA", "salesperson": "Olivia Ross", "delivery_status": "cancelled"}, {"sale_id": 27, "sale_date": "2025-04-09", "customer_name": "Emily Perez", "porsche_model": "Macan Electric", "model_line": "Macan", "model_year": 2025, "sale_price_usd": 86500, "mileage_miles": 0, "mileage_unit_raw": "miles", "mileage_suspect": false, "payment_method": "bank_transfer", "city": "San Antonio", "state": "TX", "salesperson": "Patrick Wood", "delivery_status": "delivered"}, {"sale_id": 28, "sale_date": null, "customer_name": "William Roberts", "porsche_model": "911 Dakar", "model_line": "911", "model_year": 2024, "sale_price_usd": 270000, "mileage_miles": 1050, "mileage_unit_raw": "miles", "mileage_suspect": false, "payment_method": "cash", "city": "Salt Lake City", "state": "UT", "salesperson": "Karen Diaz", "delivery_status": "awaiting"}, {"sale_id": 29, "sale_date": "2025-05-12", "customer_name": "Sofia Turner", "porsche_model": "Taycan GTS", "model_line": "Taycan", "model_year": 2023, "sale_price_usd": 139000, "mileage_miles": 6250, "mileage_unit_raw": "miles", "mileage_suspect": false, "payment_method": "financing", "city": "Raleigh", "state": "NC", "salesperson": "Justin Cox", "delivery_status": "in_transit"}, {"sale_id": 30, "sale_date": "2025-06-18", "customer_name": "Mason Phillips", "porsche_model": "Cayenne", "model_line": "Cayenne", "model_year": 2021, "sale_price_usd": 76800, "mileage_miles": 38400, "mileage_unit_raw": "miles", "mileage_suspect": false, "payment_method": "credit_card", "city": "Detroit", "state": "MI", "salesperson": "Betty Ward", "delivery_status": "delivered"}, {"sale_id": 31, "sale_date": null, "customer_name": "Ella Campbell", "porsche_model": "718 Cayman GT4 RS", "model_line": "718", "model_year": 2024, "sale_price_usd": 173600, "mileage_miles": 400, "mileage_unit_raw": "miles", "mileage_suspect": false, "payment_method": "bank_transfer", "city": "Columbus", "state": "OH", "salesperson": "Gary Reed", "delivery_status": "pending"}, {"sale_id": 32, "sale_date": "2025-07-07", "customer_name": "Logan Parker", "porsche_model": "911 Carrera GTS", "model_line": "911", "model_year": 2022, "sale_price_usd": 119900, "mileage_miles": 13600, "mileage_unit_raw": "miles", "mileage_suspect": false, "payment_method": "cash", "city": "Indianapolis", "state": "IN", "salesperson": "Maria Foster", "delivery_status": "delivered"}, {"sale_id": 33, "sale_date": "2025-07-22", "customer_name": "Grace Evans", "porsche_model": "Panamera 4 E-Hybrid", "model_line": "Panamera", "model_year": 2023, "sale_price_usd": 109250, "mileage_miles": 8900, "mileage_unit_raw": "miles", "mileage_suspect": false, "payment_method": "lease", "city": "Fort Worth", "state": "TX", "salesperson": "Harold Bennett", "delivery_status": "in_transit"}, {"sale_id": 34, "sale_date": "2025-08-14", "customer_name": "Jacob Edwards", "porsche_model": "Macan T", "model_line": "Macan", "model_year": 2022, "sale_price_usd": 82000, "mileage_miles": 21750, "mileage_unit_raw": "miles", "mileage_suspect": false, "payment_method": "bank_transfer", "city": "Jacksonville", "state": "FL", "salesperson": "Teresa Cook", "delivery_status": "delivered"}, {"sale_id": 35, "sale_date": "2025-09-01", "customer_name": "Victoria Collins", "porsche_model": "Taycan Turbo S", "model_line": "Taycan", "model_year": 2025, "sale_price_usd": 214000, "mileage_miles": 0, "mileage_unit_raw": "miles", "mileage_suspect": false, "payment_method": "crypto", "city": "San Diego", "state": "CA", "salesperson": "Frank Morgan", "delivery_status": "pending"}, {"sale_id": 36, "sale_date": null, "customer_name": "Andrew Simmons", "porsche_model": "911 Carrera", "model_line": "911", "model_year": 2024, "sale_price_usd": 124500, "mileage_miles": 4800, "mileage_unit_raw": "miles", "mileage_suspect": false, "payment_method": "credit_card", "city": "Tampa", "state": "FL", "salesperson": "Natalie", "delivery_status": "delivered"}, {"sale_id": 37, "sale_date": "2025-09-18", "customer_name": "Chloe Bennett", "porsche_model": "Cayenne S", "model_line": "Cayenne", "model_year": 2023, "sale_price_usd": 98200, "mileage_miles": 12200, "mileage_unit_raw": "miles", "mileage_suspect": false, "payment_method": "bank_transfer", "city": "Sacramento", "state": "CA", "salesperson": "Eric Woods", "delivery_status": "pending"}, {"sale_id": 38, "sale_date": "2025-10-04", "customer_name": "Ryan-Cooper", "porsche_model": "Macan", "model_line": "Macan", "model_year": 2022, "sale_price_usd": 67500, "mileage_miles": 24100, "mileage_unit_raw": "miles", "mileage_suspect": false, "payment_method": "financing", "city": "Cleveland", "state": "OH", "salesperson": "Patricia Fox", "delivery_status": "delivered"}, {"sale_id": 39, "sale_date": "2025-10-12", "customer_name": "Hannah Reed", "porsche_model": "Taycan", "model_line": "Taycan", "model_year": 2025, "sale_price_usd": 116900, "mileage_miles": 0, "mileage_unit_raw": "miles", "mileage_suspect": false, "payment_method": "bank_transfer", "city": "Milwaukee", "state": "WI", "salesperson": "Alan Price", "delivery_status": "in_transit"}, {"sale_id": 40, "sale_date": "2025-10-29", "customer_name": "Dylan Parker", "porsche_model": "Panamera 4S", "model_line": "Panamera", "model_year": 2024, "sale_price_usd": 112000, "mileage_miles": 10, "mileage_unit_raw": "miles", "mileage_suspect": true, "payment_method": "cash", "city": "Kansas City", "state": "MO", "salesperson": "Sandra Hill", "delivery_status": "delivered"}, {"sale_id": 41, "sale_date": "2025-02-11", "customer_name": "Lily Coleman", "porsche_model": "718 Boxster", "model_line": "718", "model_year": 2021, "sale_price_usd": 74000, "mileage_miles": 31000, "mileage_unit_raw": "miles", "mileage_suspect": false, "payment_method": "debit_card", "city": "Omaha", "state": "NE", "salesperson": "Victor Lee", "delivery_status": "cancelled"}, {"sale_id": 42, "sale_date": "2025-11-16", "customer_name": "Nathan Hughes", "porsche_model": "911 Turbo", "model_line": "911", "model_year": 2024, "sale_price_usd": 198300, "mileage_miles": 2400, "mileage_unit_raw": "miles", "mileage_suspect": false, "payment_method": "bank_transfer", "city": "Albuquerque", "state": "NM", "salesperson": "Monica", "delivery_status": "awaiting"}, {"sale_id": 43, "sale_date": "2025-11-18", "customer_name": "Zoe Foster", "porsche_model": "Cayenne Coupe", "model_line": "Cayenne", "model_year": 2023, "sale_price_usd": 103750, "mileage_miles": 6773, "mileage_unit_raw": "km", "mileage_suspect": false, "payment_method": "bank_transfer", "city": "Tucson", "state": "AZ", "salesperson": "Gregory Adams", "delivery_status": "pending"}, {"sale_id": 44, "sale_date": null, "customer_name": "Caleb Ward", "porsche_model": "Macan GTS", "model_line": "Macan", "model_year": 2024, "sale_price_usd": 93600, "mileage_miles": 5800, "mileage_unit_raw": "miles", "mileage_suspect": false, "payment_method": "financing", "city": "Fresno", "state": "CA", "salesperson": "Laura West", "delivery_status": "in_transit"}, {"sale_id": 45, "sale_date": "2025-12-07", "customer_name": "Stella Brooks", "porsche_model": "Taycan 4S", "model_line": "Taycan", "model_year": 2025, "sale_price_usd": 129000, "mileage_miles": 0, "mileage_unit_raw": "miles", "mileage_suspect": false, "payment_method": "bank_transfer", "city": "Virginia Beach", "state": "VA", "salesperson": "Henry King", "delivery_status": "in_transit"}, {"sale_id": 46, "sale_date": "2025-12-22", "customer_name": "Owen Bryant", "porsche_model": "Panamera Turbo", "model_line": "Panamera", "model_year": 2022, "sale_price_usd": 136000, "mileage_miles": 18400, "mileage_unit_raw": "miles", "mileage_suspect": false, "payment_method": "credit_card", "city": "Colorado Springs", "state": "CO", "salesperson": "Amber Clark", "delivery_status": "delivered"}, {"sale_id": 47, "sale_date": null, "customer_name": "Nora Simmons", "porsche_model": "911 GT3 RS", "model_line": "911", "model_year": 2024, "sale_price_usd": 286500, "mileage_miles": 700, "mileage_unit_raw": "miles", "mileage_suspect": false, "payment_method": "bank_transfer", "city": "Arlington", "state": "TX", "salesperson": "Peter Lane", "delivery_status": "pending"}, {"sale_id": 48, "sale_date": "2026-01-08", "customer_name": "Isaac Butler", "porsche_model": "Cayenne E-Hybrid", "model_line": "Cayenne", "model_year": 2023, "sale_price_usd": 92800, "mileage_miles": 15000, "mileage_unit_raw": "miles", "mileage_suspect": false, "payment_method": "lease", "city": "Bakersfield", "state": "CA", "salesperson": "Grace Morris", "delivery_status": "delivered"}, {"sale_id": 49, "sale_date": "2026-01-15", "customer_name": "Leah Henderson", "porsche_model": "Macan T", "model_line": "Macan", "model_year": 2022, "sale_price_usd": 72400, "mileage_miles": 19750, "mileage_unit_raw": "miles", "mileage_suspect": false, "payment_method": "cash", "city": "Mesa", "state": "AZ", "salesperson": "Kyle Perry", "delivery_status": "awaiting"}, {"sale_id": 50, "sale_date": "2026-01-28", "customer_name": "Christian Bailey", "porsche_model": "Taycan Turbo", "model_line": "Taycan", "model_year": 2025, "sale_price_usd": 158500, "mileage_miles": 3200, "mileage_unit_raw": "miles", "mileage_suspect": false, "payment_method": "crypto", "city": "Atlanta", "state": "GA", "salesperson": "Megan Reed", "delivery_status": "delivered"}, {"sale_id": 51, "sale_date": "2026-02-03", "customer_name": "Audrey Russell", "porsche_model": "718 Cayman", "model_line": "718", "model_year": 2021, "sale_price_usd": 69900, "mileage_miles": 27600, "mileage_unit_raw": "miles", "mileage_suspect": false, "payment_method": "bank_transfer", "city": "Long Beach", "state": "CA", "salesperson": "Carl Simmons", "delivery_status": "pending"}, {"sale_id": 52, "sale_date": null, "customer_name": "Hunter Griffin", "porsche_model": "911 Targa 4", "model_line": "911", "model_year": 2024, "sale_price_usd": 141250, "mileage_miles": 2100, "mileage_unit_raw": "miles", "mileage_suspect": false, "payment_method": "financing", "city": "Oakland", "state": "CA", "salesperson": "Linda Cole", "delivery_status": "in_transit"}, {"sale_id": 53, "sale_date": "2026-02-19", "customer_name": "Scarlett Diaz", "porsche_model": "Panamera", "model_line": "Panamera", "model_year": 2020, "sale_price_usd": 71500, "mileage_miles": 52000, "mileage_unit_raw": "miles", "mileage_suspect": false, "payment_method": "bank_transfer", "city": "Tulsa", "state": "OK", "salesperson": "Martin Brooks", "delivery_status": "delivered"}, {"sale_id": 54, "sale_date": "2026-02-25", "customer_name": "Eli Jenkins", "porsche_model": "Cayenne Turbo", "model_line": "Cayenne", "model_year": 2023, "sale_price_usd": 146800, "mileage_miles": 11300, "mileage_unit_raw": "miles", "mileage_suspect": false, "payment_method": "credit_card", "city": "Wichita", "state": "KS", "salesperson": "Diana Long", "delivery_status": "pending"}, {"sale_id": 55, "sale_date": "2026-03-01", "customer_name": "Madison Powell", "porsche_model": "Macan Electric", "model_line": "Macan", "model_year": 2025, "sale_price_usd": 89700, "mileage_miles": 0, "mileage_unit_raw": "miles", "mileage_suspect": false, "payment_method": "lease", "city": "New Orleans", "state": "LA", "salesperson": "Steve Ross", "delivery_status": "delivered"}, {"sale_id": 56, "sale_date": "2026-03-14", "customer_name": "Adrian Sanders", "porsche_model": "911 Carrera S", "model_line": "911", "model_year": 2022, "sale_price_usd": 104600, "mileage_miles": 15900, "mileage_unit_raw": "miles", "mileage_suspect": false, "payment_method": "bank_transfer", "city": "Honolulu", "state": "HI", "salesperson": "Olivia Cruz", "delivery_status": "cancelled"}, {"sale_id": 57, "sale_date": null, "customer_name": "Penelope Barnes", "porsche_model": "Taycan GTS", "model_line": "Taycan", "model_year": 2024, "sale_price_usd": 142000, "mileage_miles": 6600, "mileage_unit_raw": "miles", "mileage_suspect": false, "payment_method": "bank_transfer", "city": "Anaheim", "state": "CA", "salesperson": "Patrick Wood", "delivery_status": "delivered"}, {"sale_id": 58, "sale_date": "2026-04-08", "customer_name": "Nolan Fisher", "porsche_model": "Cayenne", "model_line": "Cayenne", "model_year": 2021, "sale_price_usd": 78400, "mileage_miles": 40250, "mileage_unit_raw": "miles", "mileage_suspect": false, "payment_method": "cash", "city": "Henderson", "state": "NV", "salesperson": "Karen Stone", "delivery_status": "pending"}, {"sale_id": 59, "sale_date": null, "customer_name": "Layla Marshall", "porsche_model": "718 Spyder RS", "model_line": "718", "model_year": 2025, "sale_price_usd": 169000, "mileage_miles": 850, "mileage_unit_raw": "miles", "mileage_suspect": false, "payment_method": "financing", "city": "Lexington", "state": "KY", "salesperson": "Justin Fox", "delivery_status": "in_transit"}, {"sale_id": 60, "sale_date": "2026-04-21", "customer_name": "Gabriel Owens", "porsche_model": "911 Dakar", "model_line": "911", "model_year": 2024, "sale_price_usd": 268900, "mileage_miles": 1400, "mileage_unit_raw": "miles", "mileage_suspect": false, "payment_method": "credit_card", "city": "Riverside", "state": "CA", "salesperson": "Betty James", "delivery_status": "delivered"}, {"sale_id": 61, "sale_date": "2026-04-29", "customer_name": "Victoria Hart", "porsche_model": "Panamera 4", "model_line": "Panamera", "model_year": 2023, "sale_price_usd": 101300, "mileage_miles": 12700, "mileage_unit_raw": "miles", "mileage_suspect": false, "payment_method": "bank_transfer", "city": "Corpus Christi", "state": "TX", "salesperson": "Gary Price", "delivery_status": "pending"}, {"sale_id": 62, "sale_date": "2026-05-05", "customer_name": "Julian Stone", "porsche_model": "Macan S", "model_line": "Macan", "model_year": 2021, "sale_price_usd": 66750, "mileage_miles": 29800, "mileage_unit_raw": "miles", "mileage_suspect": false, "payment_method": "cash", "city": "St. Louis", "state": "MO", "salesperson": "Maria Green", "delivery_status": "delivered"}, {"sale_id": 63, "sale_date": "2026-05-14", "customer_name": "Brooklyn Webb", "porsche_model": "Taycan Cross Turismo", "model_line": "Taycan", "model_year": 2024, "sale_price_usd": 127900, "mileage_miles": 7500, "mileage_unit_raw": "miles", "mileage_suspect": false, "payment_method": "lease", "city": "Pittsburgh", "state": "PA", "salesperson": "Harold Young", "delivery_status": "in_transit"}, {"sale_id": 64, "sale_date": "2026-05-23", "customer_name": "Aaron Kim", "porsche_model": "Cayenne Turbo GT", "model_line": "Cayenne", "model_year": 2025, "sale_price_usd": 200000, "mileage_miles": 1950, "mileage_unit_raw": "miles", "mileage_suspect": false, "payment_method": "bank_transfer", "city": "Cincinnati", "state": "OH", "salesperson": "Teresa Ward", "delivery_status": "delivered"}, {"sale_id": 65, "sale_date": "2026-06-02", "customer_name": "Claire Watson", "porsche_model": "911 Carrera Cabriolet", "model_line": "911", "model_year": 2023, "sale_price_usd": 132000, "mileage_miles": 8800, "mileage_unit_raw": "miles", "mileage_suspect": false, "payment_method": "crypto", "city": "Anchorage", "state": "AK", "salesperson": "Frank Reed", "delivery_status": "pending"}, {"sale_id": 66, "sale_date": "2026-06-15", "customer_name": "Sebastian Brooks", "porsche_model": "718 Cayman GT4 RS", "model_line": "718", "model_year": 2024, "sale_price_usd": 176400, "mileage_miles": 600, "mileage_unit_raw": "miles", "mileage_suspect": false, "payment_method": "credit_card", "city": "Plano", "state": "TX", "salesperson": "Angela Moore", "delivery_status": "delivered"}, {"sale_id": 67, "sale_date": null, "customer_name": "Bella Ramirez", "porsche_model": "Panamera 4 E-Hybrid", "model_line": "Panamera", "model_year": 2022, "sale_price_usd": 108500, "mileage_miles": 16200, "mileage_unit_raw": "miles", "mileage_suspect": false, "payment_method": "bank_transfer", "city": "Newark", "state": "NJ", "salesperson": "Rachel West", "delivery_status": "cancelled"}, {"sale_id": 68, "sale_date": "2026-07-07", "customer_name": "Miles Peterson", "porsche_model": "Macan", "model_line": "Macan", "model_year": 2021, "sale_price_usd": 59000, "mileage_miles": 36000, "mileage_unit_raw": "miles", "mileage_suspect": false, "payment_method": "financing", "city": "Greensboro", "state": "NC", "salesperson": "Thomas Fox", "delivery_status": "awaiting"}, {"sale_id": 69, "sale_date": "2026-07-20", "customer_name": "Skylar Rogers", "porsche_model": "Taycan Turbo S", "model_line": "Taycan", "model_year": 2025, "sale_price_usd": 218000, "mileage_miles": 0, "mileage_unit_raw": "miles", "mileage_suspect": false, "payment_method": "bank_transfer", "city": "Lincoln", "state": "NE", "salesperson": "Lisa Dunn", "delivery_status": "pending"}, {"sale_id": 70, "sale_date": null, "customer_name": "Dominic Kelly", "porsche_model": "Cayenne S", "model_line": "Cayenne", "model_year": 2024, "sale_price_usd": 99950, "mileage_miles": 5300, "mileage_unit_raw": "miles", "mileage_suspect": false, "payment_method": "debit_card", "city": "Jersey City", "state": "NJ", "salesperson": "Brian Allen", "delivery_status": "delivered"}, {"sale_id": 71, "sale_date": "2026-04-08", "customer_name": "Lucy Howard", "porsche_model": "911 Carrera GTS", "model_line": "911", "model_year": 2024, "sale_price_usd": 121750, "mileage_miles": 5872, "mileage_unit_raw": "km", "mileage_suspect": false, "payment_method": "credit_card", "city": "Chandler", "state": "AZ", "salesperson": "George Hall", "delivery_status": "delivered"}, {"sale_id": 72, "sale_date": "2026-08-18", "customer_name": "Everett Cox", "porsche_model": "718 Boxster GTS", "model_line": "718", "model_year": 2023, "sale_price_usd": 91500, "mileage_miles": 13300, "mileage_unit_raw": "miles", "mileage_suspect": false, "payment_method": "lease", "city": "Reno", "state": "NV", "salesperson": "Helen King", "delivery_status": "in_transit"}, {"sale_id": 73, "sale_date": "2026-08-31", "customer_name": "Maya Rivera", "porsche_model": "Panamera Turbo S", "model_line": "Panamera", "model_year": 2022, "sale_price_usd": 134000, "mileage_miles": 20100, "mileage_unit_raw": "miles", "mileage_suspect": false, "payment_method": "bank_transfer", "city": "Buffalo", "state": "NY", "salesperson": "Samuel Price", "delivery_status": "in_transit"}, {"sale_id": 74, "sale_date": "2026-09-09", "customer_name": "Connor Ward", "porsche_model": "Macan GTS", "model_line": "Macan", "model_year": 2024, "sale_price_usd": 96800, "mileage_miles": 0, "mileage_unit_raw": "miles", "mileage_suspect": false, "payment_method": "bank_transfer", "city": "Durham", "state": "NC", "salesperson": "Peter Ford", "delivery_status": "delivered"}, {"sale_id": 75, "sale_date": "2026-09-17", "customer_name": "Eliana Bell", "porsche_model": "Taycan 4S", "model_line": "Taycan", "model_year": 2025, "sale_price_usd": 131600, "mileage_miles": 2900, "mileage_unit_raw": "miles", "mileage_suspect": false, "payment_method": "bank_transfer", "city": "Laredo", "state": "TX", "salesperson": "Angela Green", "delivery_status": "pending"}, {"sale_id": 76, "sale_date": "2026-09-28", "customer_name": "Cameron Murphy", "porsche_model": "Cayenne E-Hybrid", "model_line": "Cayenne", "model_year": 2023, "sale_price_usd": 94300, "mileage_miles": 13100, "mileage_unit_raw": "miles", "mileage_suspect": false, "payment_method": "cash", "city": "Madison", "state": "WI", "salesperson": "Victor Stone", "delivery_status": "delivered"}, {"sale_id": 77, "sale_date": "2026-10-06", "customer_name": "Ariana Cook", "porsche_model": "911 Turbo S", "model_line": "911", "model_year": 2025, "sale_price_usd": 242000, "mileage_miles": 1100, "mileage_unit_raw": "miles", "mileage_suspect": false, "payment_method": "crypto", "city": "Lubbock", "state": "TX", "salesperson": "Rachel Turner", "delivery_status": "awaiting"}, {"sale_id": 78, "sale_date": "2026-10-16", "customer_name": "Wesley Morgan", "porsche_model": "718 Cayman S", "model_line": "718", "model_year": 2022, "sale_price_usd": 82750, "mileage_miles": 22500, "mileage_unit_raw": "miles", "mileage_suspect": false, "payment_method": "credit_card", "city": "Toledo", "state": "OH", "salesperson": "Chris Moore", "delivery_status": "cancelled"}, {"sale_id": 79, "sale_date": "2026-10-29", "customer_name": "Naomi Peterson", "porsche_model": "Macan Electric", "model_line": "Macan", "model_year": 2026, "sale_price_usd": 91300, "mileage_miles": 0, "mileage_unit_raw": "miles", "mileage_suspect": false, "payment_method": "bank_transfer", "city": "Irvine", "state": "CA", "salesperson": "Laura Hill", "delivery_status": "delivered"}, {"sale_id": 80, "sale_date": "2026-11-03", "customer_name": "Jason Perry", "porsche_model": "Panamera", "model_line": "Panamera", "model_year": 2021, "sale_price_usd": 79900, "mileage_miles": 44800, "mileage_unit_raw": "miles", "mileage_suspect": false, "payment_method": "financing", "city": "Garland", "state": "TX", "salesperson": "Martin Young", "delivery_status": "pending"}, {"sale_id": 81, "sale_date": null, "customer_name": "Riley Flores", "porsche_model": "Cayenne Coupe", "model_line": "Cayenne", "model_year": 2024, "sale_price_usd": 111000, "mileage_miles": 6700, "mileage_unit_raw": "miles", "mileage_suspect": false, "payment_method": "bank_transfer", "city": "Irving", "state": "TX", "salesperson": "Diana Cooper", "delivery_status": "in_transit"}, {"sale_id": 82, "sale_date": "2026-12-11", "customer_name": "Hazel Long", "porsche_model": "911 Targa 4S", "model_line": "911", "model_year": 2023, "sale_price_usd": 156500, "mileage_miles": 4200, "mileage_unit_raw": "miles", "mileage_suspect": false, "payment_method": "cash", "city": "Chesapeake", "state": "VA", "salesperson": "Steve Gray", "delivery_status": "delivered"}, {"sale_id": 83, "sale_date": "2026-12-24", "customer_name": "Easton Bailey", "porsche_model": "Taycan", "model_line": "Taycan", "model_year": 2025, "sale_price_usd": 119900, "mileage_miles": 1250, "mileage_unit_raw": "miles", "mileage_suspect": false, "payment_method": "lease", "city": "Scottsdale", "state": "AZ", "salesperson": "Olivia Ross", "delivery_status": "pending"}, {"sale_id": 84, "sale_date": null, "customer_name": "Aurora Cooper", "porsche_model": "Macan T", "model_line": "Macan", "model_year": 2022, "sale_price_usd": 73200, "mileage_miles": 18600, "mileage_unit_raw": "miles", "mileage_suspect": false, "payment_method": "bank_transfer", "city": "Norfolk", "state": "VA", "salesperson": "Patrick Wood", "delivery_status": "delivered"}, {"sale_id": 85, "sale_date": "2026-12-28", "customer_name": "Colton Richardson", "porsche_model": "911 GT3", "model_line": "911", "model_year": 2024, "sale_price_usd": 224000, "mileage_miles": 3000, "mileage_unit_raw": "miles", "mileage_suspect": false, "payment_method": "bank_transfer", "city": "Boise", "state": "ID", "salesperson": "Karen Diaz", "delivery_status": "awaiting"}, {"sale_id": 86, "sale_date": "2027-01-15", "customer_name": "Mason Stewart", "porsche_model": "911 Carrera", "model_line": "911", "model_year": 2024, "sale_price_usd": 126900, "mileage_miles": 7200, "mileage_unit_raw": "miles", "mileage_suspect": false, "payment_method": "credit_card", "city": "Orlando", "state": "FL", "salesperson": "Kevin Brown", "delivery_status": "delivered"}, {"sale_id": 87, "sale_date": "2027-01-29", "customer_name": "Harper Reed", "porsche_model": "Cayenne", "model_line": "Cayenne", "model_year": 2023, "sale_price_usd": 84500, "mileage_miles": 21400, "mileage_unit_raw": "miles", "mileage_suspect": false, "payment_method": "bank_transfer", "city": "San Jose", "state": "CA", "salesperson": "Amanda Lee", "delivery_status": "pending"}, {"sale_id": 88, "sale_date": "2027-02-11", "customer_name": "Tyler-Morris", "porsche_model": "Macan S", "model_line": "Macan", "model_year": 2022, "sale_price_usd": 69800, "mileage_miles": 26300, "mileage_unit_raw": "miles", "mileage_suspect": false, "payment_method": "financing", "city": "Tampa", "state": "FL", "salesperson": "Brian Hall", "delivery_status": "delivered"}, {"sale_id": 89, "sale_date": null, "customer_name": "Natalie Brooks", "porsche_model": "Taycan 4S", "model_line": "Taycan", "model_year": 2025, "sale_price_usd": 132700, "mileage_miles": 0, "mileage_unit_raw": "miles", "mileage_suspect": false, "payment_method": "bank_transfer", "city": "Denver", "state": "CO", "salesperson": "Jessica White", "delivery_status": "in_transit"}, {"sale_id": 90, "sale_date": "2027-03-05", "customer_name": "Brandon Parker", "porsche_model": "Panamera", "model_line": "Panamera", "model_year": 2021, "sale_price_usd": 81000, "mileage_miles": 42, "mileage_unit_raw": "miles", "mileage_suspect": true, "payment_method": "cash", "city": "Austin", "state": "TX", "salesperson": "Thomas King", "delivery_status": "delivered"}, {"sale_id": 91, "sale_date": "2027-03-18", "customer_name": "Lauren Foster", "porsche_model": "718 Cayman", "model_line": "718", "model_year": 2023, "sale_price_usd": 78900, "mileage_miles": 17500, "mileage_unit_raw": "miles", "mileage_suspect": false, "payment_method": "debit_card", "city": "Seattle", "state": "WA", "salesperson": "Victor Lee", "delivery_status": "cancelled"}, {"sale_id": 92, "sale_date": "2027-04-02", "customer_name": "Adam Hughes", "porsche_model": "911 Turbo S", "model_line": "911", "model_year": 2026, "sale_price_usd": 249300, "mileage_miles": 900, "mileage_unit_raw": "miles", "mileage_suspect": false, "payment_method": "bank_transfer", "city": "Boston", "state": "MA", "salesperson": "Monica Green", "delivery_status": "awaiting"}, {"sale_id": 93, "sale_date": "2027-04-15", "customer_name": "Julia Coleman", "porsche_model": "Cayenne Coupe", "model_line": "Cayenne", "model_year": 2024, "sale_price_usd": 108750, "mileage_miles": 5530, "mileage_unit_raw": "km", "mileage_suspect": false, "payment_method": "bank_transfer", "city": "Phoenix", "state": "AZ", "salesperson": "Gregory Adams", "delivery_status": "pending"}, {"sale_id": 94, "sale_date": null, "customer_name": "Caleb Simmons", "porsche_model": "Macan Electric", "model_line": "Macan", "model_year": 2026, "sale_price_usd": 92600, "mileage_miles": 0, "mileage_unit_raw": "miles", "mileage_suspect": false, "payment_method": "financing", "city": "Chicago", "state": "IL", "salesperson": "Laura West", "delivery_status": "in_transit"}, {"sale_id": 95, "sale_date": "2027-05-12", "customer_name": "Ariana Price", "porsche_model": "Taycan Turbo", "model_line": "Taycan", "model_year": 2025, "sale_price_usd": 164000, "mileage_miles": 0, "mileage_unit_raw": "miles", "mileage_suspect": false, "payment_method": "bank_transfer", "city": "Dallas", "state": "TX", "salesperson": "Henry King", "delivery_status": "in_transit"}, {"sale_id": 96, "sale_date": "2027-05-27", "customer_name": "Owen Rivera", "porsche_model": "Panamera 4S", "model_line": "Panamera", "model_year": 2024, "sale_price_usd": 119000, "mileage_miles": 13400, "mileage_unit_raw": "miles", "mileage_suspect": false, "payment_method": "credit_card", "city": "San Francisco", "state": "CA", "salesperson": "Amber Clark", "delivery_status": "delivered"}, {"sale_id": 97, "sale_date": null, "customer_name": "Nora Bennett", "porsche_model": "911 GT3", "model_line": "911", "model_year": 2026, "sale_price_usd": 232500, "mileage_miles": 1700, "mileage_unit_raw": "miles", "mileage_suspect": false, "payment_method": "bank_transfer", "city": "Las Vegas", "state": "NV", "salesperson": "Peter Lane", "delivery_status": "pending"}, {"sale_id": 98, "sale_date": "2027-06-18", "customer_name": "Isaac Turner", "porsche_model": "Cayenne E-Hybrid", "model_line": "Cayenne", "model_year": 2023, "sale_price_usd": 96800, "mileage_miles": 14000, "mileage_unit_raw": "miles", "mileage_suspect": false, "payment_method": "lease", "city": "Charlotte", "state": "NC", "salesperson": "Grace Morris", "delivery_status": "delivered"}, {"sale_id": 99, "sale_date": "2027-07-03", "customer_name": "Leah Scott", "porsche_model": "Macan T", "model_line": "Macan", "model_year": 2022, "sale_price_usd": 74400, "mileage_miles": 20750, "mileage_unit_raw": "miles", "mileage_suspect": false, "payment_method": "cash", "city": "Mesa", "state": "AZ", "salesperson": "Kyle Perry", "delivery_status": "awaiting"}, {"sale_id": 100, "sale_date": "2027-07-22", "customer_name": "Christian Bailey", "porsche_model": "Taycan GTS", "model_line": "Taycan", "model_year": 2025, "sale_price_usd": 148500, "mileage_miles": 5200, "mileage_unit_raw": "miles", "mileage_suspect": false, "payment_method": "crypto", "city": "Atlanta", "state": "GA", "salesperson": "Megan Reed", "delivery_status": "delivered"}, {"sale_id": 101, "sale_date": "2027-08-08", "customer_name": "Audrey Russell", "porsche_model": "718 Boxster", "model_line": "718", "model_year": 2021, "sale_price_usd": 71900, "mileage_miles": 29600, "mileage_unit_raw": "miles", "mileage_suspect": false, "payment_method": "bank_transfer", "city": "Long Beach", "state": "CA", "salesperson": "Carl Simmons", "delivery_status": "pending"}, {"sale_id": 102, "sale_date": null, "customer_name": "Hunter Griffin", "porsche_model": "911 Targa 4", "model_line": "911", "model_year": 2024, "sale_price_usd": 143250, "mileage_miles": 3100, "mileage_unit_raw": "miles", "mileage_suspect": false, "payment_method": "financing", "city": "Oakland", "state": "CA", "salesperson": "Linda Cole", "delivery_status": "in_transit"}, {"sale_id": 103, "sale_date": "2027-09-19", "customer_name": "Scarlett Diaz", "porsche_model": "Panamera Turbo", "model_line": "Panamera", "model_year": 2020, "sale_price_usd": 137500, "mileage_miles": 48000, "mileage_unit_raw": "miles", "mileage_suspect": false, "payment_method": "bank_transfer", "city": "Tulsa", "state": "OK", "salesperson": "Martin Brooks", "delivery_status": "delivered"}, {"sale_id": 104, "sale_date": "2027-09-25", "customer_name": "Eli Jenkins", "porsche_model": "Cayenne Turbo GT", "model_line": "Cayenne", "model_year": 2025, "sale_price_usd": 204800, "mileage_miles": 3300, "mileage_unit_raw": "miles", "mileage_suspect": false, "payment_method": "credit_card", "city": "Wichita", "state": "KS", "salesperson": "Diana Long", "delivery_status": "pending"}, {"sale_id": 105, "sale_date": "2027-10-01", "customer_name": "Madison Powell", "porsche_model": "911 Dakar", "model_line": "911", "model_year": 2024, "sale_price_usd": 271700, "mileage_miles": 1050, "mileage_unit_raw": "miles", "mileage_suspect": false, "payment_method": "lease", "city": "New Orleans", "state": "LA", "salesperson": "Steve Ross", "delivery_status": "delivered"}], "quarantine": [{"sale_id": 6, "column": "sale_date", "raw_value": "2024-02-30", "reason": "data_invalida"}, {"sale_id": 9, "column": "sale_date", "raw_value": "April 31st, 2024", "reason": "data_invalida"}, {"sale_id": 17, "column": "sale_date", "raw_value": "2024-10-40", "reason": "data_invalida"}, {"sale_id": 22, "column": "sale_date", "raw_value": "01/32/2025", "reason": "data_invalida"}, {"sale_id": 24, "column": "sale_date", "raw_value": "February 29th, 2025", "reason": "data_invalida"}, {"sale_id": 28, "column": "sale_date", "raw_value": "2025/04/31", "reason": "data_invalida"}, {"sale_id": 31, "column": "sale_date", "raw_value": "06/31/2025", "reason": "data_invalida"}, {"sale_id": 36, "column": "sale_date", "raw_value": "2025-09-31", "reason": "data_invalida"}, {"sale_id": 44, "column": "sale_date", "raw_value": "November 31st, 2025", "reason": "data_invalida"}, {"sale_id": 47, "column": "sale_date", "raw_value": "2025-12-40", "reason": "data_invalida"}, {"sale_id": 52, "column": "sale_date", "raw_value": "February 30th, 2026", "reason": "data_invalida"}, {"sale_id": 57, "column": "sale_date", "raw_value": "03/32/2026", "reason": "data_invalida"}, {"sale_id": 59, "column": "sale_date", "raw_value": "April 31st, 2026", "reason": "data_invalida"}, {"sale_id": 67, "column": "sale_date", "raw_value": "2026-06-31", "reason": "data_invalida"}, {"sale_id": 70, "column": "sale_date", "raw_value": "2026-07-35", "reason": "data_invalida"}, {"sale_id": 81, "column": "sale_date", "raw_value": "11/31/2026", "reason": "data_invalida"}, {"sale_id": 84, "column": "sale_date", "raw_value": "2026-12-38", "reason": "data_invalida"}, {"sale_id": 89, "column": "sale_date", "raw_value": "February 30th, 2027", "reason": "data_invalida"}, {"sale_id": 94, "column": "sale_date", "raw_value": "April 31st, 2027", "reason": "data_invalida"}, {"sale_id": 97, "column": "sale_date", "raw_value": "2027-06-40", "reason": "data_invalida"}, {"sale_id": 102, "column": "sale_date", "raw_value": "August 32nd, 2027", "reason": "data_invalida"}]};
+const clean = DATA.clean, quarantine = DATA.quarantine;
+const quarIds = new Set(quarantine.map(q=>q.sale_id));
+
+/* ---------- palette + helpers ---------- */
+const C = {red:'#E0142B',green:'#2FBF71',amber:'#F5B301',blue:'#4FA3E3',violet:'#9B8CFF',
+           muted:'#7E8899',dim:'#586374',line:'#262E3B',line2:'#333C4B',ink:'#E9ECF1'};
+const LINE_COLORS = {'718':C.blue,'911':C.red,'Taycan':C.violet,'Panamera':'#48C9B0','Macan':C.amber,'Cayenne':'#E77F3B'};
+const usd = n => '$'+Math.round(n).toLocaleString('en-US');
+const usdK = n => n>=1000 ? '$'+(n/1000).toLocaleString('en-US',{maximumFractionDigits:0})+'k' : '$'+Math.round(n);
+const num = n => n==null?'—':Number(n).toLocaleString('pt-BR');
+const esc = s => (s==null?'':String(s)).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ---------- filter state ---------- */
+const F = {q:'',line:'',pay:'',del:'',state:'',quar:false,susp:false};
+let sortCol='sale_id', sortDir=1;
+
+function distinct(key){return [...new Set(clean.map(r=>r[key]).filter(v=>v!=null))].sort();}
+function fillSelect(id,label,vals){
+  const s=document.getElementById(id);
+  s.innerHTML=`<option value="">${label}</option>`+vals.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('');
+}
+
+function applyFilters(){
+  const q=F.q.trim().toLowerCase();
+  return clean.filter(r=>{
+    if(F.line && r.model_line!==F.line) return false;
+    if(F.pay && r.payment_method!==F.pay) return false;
+    if(F.del && r.delivery_status!==F.del) return false;
+    if(F.state && r.state!==F.state) return false;
+    if(F.quar && !quarIds.has(r.sale_id)) return false;
+    if(F.susp && !r.mileage_suspect) return false;
+    if(q){
+      const hay=[r.customer_name,r.salesperson,r.city,r.porsche_model].join(' ').toLowerCase();
+      if(!hay.includes(q)) return false;
+    }
+    return true;
+  });
+}
+
+/* ---------- gauge (signature) ---------- */
+function polar(cx,cy,r,deg){const a=(deg-180)*Math.PI/180;return[cx+r*Math.cos(a),cy+r*Math.sin(a)];}
+function arc(cx,cy,r,a0,a1,w,col){
+  const [x0,y0]=polar(cx,cy,r,a0),[x1,y1]=polar(cx,cy,r,a1);
+  const large=(a1-a0)>180?1:0;
+  return `<path d="M${x0} ${y0} A${r} ${r} 0 ${large} 1 ${x1} ${y1}" fill="none" stroke="${col}" stroke-width="${w}" stroke-linecap="butt"/>`;
+}
+function renderGauge(pct){
+  const W=260,H=150,cx=130,cy=140,r=104,w=15;
+  let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Integridade ${pct}%">`;
+  s+=arc(cx,cy,r,0,180,w,C.line2);                 // trilho
+  s+=arc(cx,cy,r,0,108,w,C.red);                   // 0–60% vermelho
+  s+=arc(cx,cy,r,108,153,w,C.amber);               // 60–85% âmbar
+  s+=arc(cx,cy,r,153,180,w,C.green);               // 85–100% verde
+  for(let p=0;p<=100;p+=20){                        // ticks
+    const [tx,ty]=polar(cx,cy,r-w-4,p*1.8);const [tx2,ty2]=polar(cx,cy,r-w-11,p*1.8);
+    s+=`<line x1="${tx}" y1="${ty}" x2="${tx2}" y2="${ty2}" stroke="${C.dim}" stroke-width="1"/>`;
+    const [lx,ly]=polar(cx,cy,r-w-22,p*1.8);
+    s+=`<text x="${lx}" y="${ly+3}" text-anchor="middle" class="gval">${p}</text>`;
+  }
+  const ang=pct*1.8;const [nx,ny]=polar(cx,cy,r-w-2,ang);
+  const col=pct>=85?C.green:pct>=60?C.amber:C.red;
+  s+=`<line x1="${cx}" y1="${cy}" x2="${nx}" y2="${ny}" stroke="${col}" stroke-width="3" stroke-linecap="round"/>`;
+  s+=`<circle cx="${cx}" cy="${cy}" r="6" fill="${col}"/><circle cx="${cx}" cy="${cy}" r="11" fill="none" stroke="${C.line2}" stroke-width="1.5"/>`;
+  s+='</svg>';
+  document.getElementById('gauge').innerHTML=s;
+  const pe=document.getElementById('g-pct');pe.textContent=pct+'%';pe.style.color=col;
+}
+
+/* ---------- generic bar chart ---------- */
+function barChart(el,pairs,{color=C.blue,horizontal=false,fmt=num,colorFn=null}={}){
+  const max=Math.max(1,...pairs.map(p=>p[1]));
+  if(horizontal){
+    const rowH=26,padL=96,padR=48,W=560,H=pairs.length*rowH+8;
+    let s=`<svg viewBox="0 0 ${W} ${H}">`;
+    pairs.forEach((p,i)=>{
+      const y=i*rowH+6,bw=(W-padL-padR)*(p[1]/max);
+      const col=colorFn?colorFn(p[0]):color;
+      s+=`<text x="${padL-8}" y="${y+12}" text-anchor="end" class="glabel">${esc(p[0])}</text>`;
+      s+=`<rect class="bar" x="${padL}" y="${y}" width="${Math.max(bw,1.5)}" height="15" rx="2" fill="${col}"><title>${esc(p[0])}: ${fmt(p[1])}</title></rect>`;
+      s+=`<text x="${padL+bw+7}" y="${y+12}" class="gval">${fmt(p[1])}</text>`;
+    });
+    s+='</svg>';el.innerHTML=s;
+  }else{
+    const W=560,H=210,padB=34,padT=14,padL=8,padR=8,n=pairs.length;
+    const bw=(W-padL-padR)/n;
+    let s=`<svg viewBox="0 0 ${W} ${H}">`;
+    s+=`<line class="axis" x1="${padL}" y1="${H-padB}" x2="${W-padR}" y2="${H-padB}"/>`;
+    pairs.forEach((p,i)=>{
+      const bh=(H-padB-padT)*(p[1]/max),x=padL+i*bw+bw*0.16,y=H-padB-bh,w=bw*0.68;
+      const col=colorFn?colorFn(p[0]):color;
+      s+=`<rect class="bar" x="${x}" y="${y}" width="${w}" height="${Math.max(bh,1.5)}" rx="2" fill="${col}"><title>${esc(p[0])}: ${fmt(p[1])}</title></rect>`;
+      s+=`<text x="${x+w/2}" y="${y-5}" text-anchor="middle" class="gval">${fmt(p[1])}</text>`;
+      s+=`<text x="${x+w/2}" y="${H-padB+14}" text-anchor="middle" class="glabel">${esc(p[0])}</text>`;
+    });
+    s+='</svg>';el.innerHTML=s;
+  }
+}
+
+/* ---------- donut ---------- */
+function donut(el,pairs){
+  const total=pairs.reduce((a,p)=>a+p[1],0)||1;
+  const cx=90,cy=105,r=66,w=22;let a0=0;
+  const cols=[C.blue,C.red,C.amber,C.green,C.violet,'#48C9B0','#E77F3B'];
+  let s=`<svg viewBox="0 0 400 210">`;
+  pairs.forEach((p,i)=>{
+    const a1=a0+p[1]/total*360;
+    s+=arc(cx,cy,r,a0+90>360?a0+90-360:a0+90, a1+90, w, cols[i%cols.length]).replace('stroke-linecap="butt"','stroke-linecap="butt"');
+    a0=a1;
+  });
+  // rebuild arcs properly (0deg at top)
+  s=`<svg viewBox="0 0 400 210">`;a0=0;
+  pairs.forEach((p,i)=>{
+    const frac=p[1]/total,a1=a0+frac*360;
+    const [x0,y0]=[cx+r*Math.sin(a0*Math.PI/180), cy-r*Math.cos(a0*Math.PI/180)];
+    const [x1,y1]=[cx+r*Math.sin(a1*Math.PI/180), cy-r*Math.cos(a1*Math.PI/180)];
+    const large=frac>0.5?1:0;
+    s+=`<path d="M${x0} ${y0} A${r} ${r} 0 ${large} 1 ${x1} ${y1}" fill="none" stroke="${cols[i%cols.length]}" stroke-width="${w}"><title>${esc(p[0])}: ${p[1]} (${(frac*100).toFixed(0)}%)</title></path>`;
+    a0=a1;
+  });
+  s+=`<text x="${cx}" y="${cy-4}" text-anchor="middle" style="font-family:var(--disp);font-weight:500;font-size:26px;fill:${C.ink}">${total}</text>`;
+  s+=`<text x="${cx}" y="${cy+14}" text-anchor="middle" class="glabel">vendas</text>`;
+  // legend
+  pairs.forEach((p,i)=>{
+    const ly=26+i*24;
+    s+=`<rect x="196" y="${ly-9}" width="10" height="10" rx="2" fill="${cols[i%cols.length]}"/>`;
+    s+=`<text x="214" y="${ly}" class="glabel" style="fill:${C.ink}">${esc(p[0])}</text>`;
+    s+=`<text x="392" y="${ly}" text-anchor="end" class="gval">${p[1]}</text>`;
+  });
+  s+='</svg>';el.innerHTML=s;
+}
+
+/* ---------- aggregations ---------- */
+function countBy(rows,key,order=null){
+  const m={};rows.forEach(r=>{const v=r[key];if(v!=null)m[v]=(m[v]||0)+1;});
+  let pairs=Object.entries(m);
+  if(order)pairs.sort((a,b)=>order.indexOf(a[0])-order.indexOf(b[0]));
+  else pairs.sort((a,b)=>b[1]-a[1]);
+  return pairs;
+}
+function revenueByMonth(rows){
+  const m={};rows.forEach(r=>{if(r.sale_date&&r.sale_price_usd!=null){const k=r.sale_date.slice(0,7);m[k]=(m[k]||0)+r.sale_price_usd;}});
+  return Object.entries(m).sort((a,b)=>a[0]<b[0]?-1:1);
+}
+function priceHistogram(rows){
+  const bins={};const size=25000;
+  rows.forEach(r=>{if(r.sale_price_usd!=null){const b=Math.floor(r.sale_price_usd/size)*size;bins[b]=(bins[b]||0)+1;}});
+  const keys=Object.keys(bins).map(Number).sort((a,b)=>a-b);
+  return keys.map(k=>[usdK(k),bins[k]]);
+}
+
+/* ---------- month area chart ---------- */
+function areaChart(el,pairs){
+  if(!pairs.length){el.innerHTML='<div style="color:var(--dim);font-family:var(--mono);font-size:12px;padding:40px 0;text-align:center">sem datas válidas no filtro</div>';return;}
+  const W=560,H=210,padL=44,padR=12,padT=16,padB=34;
+  const max=Math.max(...pairs.map(p=>p[1]));
+  const n=pairs.length;
+  const xt=i=>padL+(W-padL-padR)*(n===1?0.5:i/(n-1));
+  const yt=v=>H-padB-(H-padB-padT)*(v/max);
+  let path='',area='';
+  pairs.forEach((p,i)=>{const x=xt(i),y=yt(p[1]);path+=(i?'L':'M')+x+' '+y+' ';});
+  area=`M${xt(0)} ${H-padB} `+pairs.map((p,i)=>`L${xt(i)} ${yt(p[1])} `).join('')+`L${xt(n-1)} ${H-padB} Z`;
+  let s=`<svg viewBox="0 0 ${W} ${H}"><defs><linearGradient id="ag" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="${C.blue}" stop-opacity=".34"/><stop offset="1" stop-color="${C.blue}" stop-opacity="0"/></linearGradient></defs>`;
+  for(let g=0;g<=2;g++){const v=max*g/2,y=yt(v);s+=`<line class="axis" x1="${padL}" y1="${y}" x2="${W-padR}" y2="${y}" stroke="${C.line}"/><text x="${padL-6}" y="${y+3}" text-anchor="end" class="gval">${usdK(v)}</text>`;}
+  s+=`<path d="${area}" fill="url(#ag)"/><path d="${path}" fill="none" stroke="${C.blue}" stroke-width="2"/>`;
+  const step=Math.ceil(n/6);
+  pairs.forEach((p,i)=>{
+    s+=`<circle cx="${xt(i)}" cy="${yt(p[1])}" r="2.6" fill="${C.blue}"><title>${p[0]}: ${usd(p[1])}</title></circle>`;
+    if(i%step===0||i===n-1)s+=`<text x="${xt(i)}" y="${H-padB+15}" text-anchor="middle" class="glabel">${p[0]}</text>`;
+  });
+  s+='</svg>';el.innerHTML=s;
+}
+
+/* ---------- KPIs ---------- */
+function renderKPIs(rows){
+  const prices=rows.map(r=>r.sale_price_usd).filter(v=>v!=null);
+  const rev=prices.reduce((a,b)=>a+b,0);
+  const ticket=prices.length?rev/prices.length:0;
+  const kmc=rows.filter(r=>r.mileage_unit_raw==='km').length;
+  const susp=rows.filter(r=>r.mileage_suspect).length;
+  const qids=new Set(rows.map(r=>r.sale_id).filter(id=>quarIds.has(id)));
+  const items=[
+    {lab:'Vendas no filtro',val:rows.length,note:'de '+clean.length+' registros',c:C.blue},
+    {lab:'Receita total',val:usd(rev),note:prices.length+' com preço',c:C.green},
+    {lab:'Ticket médio',val:usd(ticket),note:'USD por venda',c:C.green},
+    {lab:'Faixa de preço',val:prices.length?usdK(Math.min(...prices))+'–'+usdK(Math.max(...prices)):'—',note:'mín · máx',c:C.blue},
+    {lab:'Milhagem KM→mi',val:kmc,note:'convertidas',c:C.violet},
+    {lab:'Milhagem suspeita',val:susp,note:'flag p/ revisão',c:C.amber},
+  ];
+  document.getElementById('kpis').innerHTML=items.map(k=>
+    `<div class="kpi" style="--accent:${k.c}"><div class="lab">${k.lab}</div><div class="val">${k.val}</div><div class="note">${k.note}</div></div>`).join('');
+  // gauge over filtered set
+  const total=rows.length||1;const cleanN=rows.filter(r=>!quarIds.has(r.sale_id)).length;
+  const pct=Math.round(cleanN/total*100);
+  renderGauge(pct);
+  document.getElementById('g-tag').textContent=cleanN+' / '+total;
+  document.getElementById('g-frac').textContent=cleanN+' limpas · '+(total-cleanN)+' c/ quarentena';
+}
+
+/* ---------- table ---------- */
+const COLS=[
+  ['sale_id','ID','num'],['sale_date','Data',''],['customer_name','Cliente',''],
+  ['porsche_model','Modelo',''],['model_line','Linha',''],['model_year','Ano','num'],
+  ['sale_price_usd','Preço (USD)','num'],['mileage_miles','Milhas','num'],['mileage_unit_raw','Un.',''],
+  ['mileage_suspect','Susp.','ctr'],['payment_method','Pagamento',''],['city','Cidade',''],
+  ['state','UF',''],['salesperson','Vendedor',''],['delivery_status','Entrega','']
+];
+const DEL_COLOR={delivered:C.green,in_transit:C.blue,pending:C.amber,awaiting:C.violet,cancelled:C.red};
+
+function renderTable(rows){
+  const th=COLS.map(c=>{
+    const arw=sortCol===c[0]?`<span class="arw">${sortDir>0?'▲':'▼'}</span>`:'';
+    return `<th data-col="${c[0]}" class="${c[2]==='num'?'num':''}">${c[1]}${arw}</th>`;
+  }).join('');
+  document.getElementById('thead').innerHTML='<tr>'+th+'</tr>';
+  const sorted=[...rows].sort((a,a2)=>{
+    let x=a[sortCol],y=a2[sortCol];
+    if(x==null)return 1;if(y==null)return -1;
+    if(typeof x==='number')return (x-y)*sortDir;
+    return String(x).localeCompare(String(y))*sortDir;
+  });
+  const body=sorted.map(r=>{
+    const tds=COLS.map(([k,,cls])=>{
+      let v=r[k];
+      if(k==='mileage_suspect')return `<td class="ctr" style="text-align:center">${v?'<span class="flag" title="milhagem suspeita (<100)"></span>':''}</td>`;
+      if(v==null)return `<td class="cell-null">null</td>`;
+      if(k==='sale_price_usd')return `<td class="num">${usd(v)}</td>`;
+      if(k==='mileage_miles')return `<td class="num">${num(v)}</td>`;
+      if(k==='delivery_status')return `<td><span class="pill" style="color:${DEL_COLOR[v]||C.muted};border-color:${DEL_COLOR[v]||C.line2}">${esc(v)}</span></td>`;
+      if(k==='model_line')return `<td><span style="color:${LINE_COLORS[v]||C.ink}">${esc(v)}</span></td>`;
+      const numcls=cls==='num'?'num':'';
+      const mut=(k==='mileage_unit_raw'||k==='state')?'':'';
+      return `<td class="${numcls}">${esc(v)}</td>`;
+    }).join('');
+    return `<tr>${tds}</tr>`;
+  }).join('');
+  document.getElementById('tbody').innerHTML=body;
+  document.getElementById('rowcount').textContent=rows.length+' linha'+(rows.length===1?'':'s')+' exibida'+(rows.length===1?'':'s');
+  document.getElementById('tbl-count').textContent='· '+rows.length+' de '+clean.length;
+  document.querySelectorAll('#thead th').forEach(t=>t.onclick=()=>{
+    const c=t.dataset.col;if(sortCol===c)sortDir*=-1;else{sortCol=c;sortDir=1;}render();
+  });
+}
+
+/* ---------- master render ---------- */
+function render(){
+  const rows=applyFilters();
+  renderKPIs(rows);
+  barChart(document.getElementById('ch-line'),countBy(rows,'model_line',['718','911','Taycan','Panamera','Macan','Cayenne']),{colorFn:k=>LINE_COLORS[k]||C.blue});
+  areaChart(document.getElementById('ch-month'),revenueByMonth(rows));
+  donut(document.getElementById('ch-pay'),countBy(rows,'payment_method'));
+  barChart(document.getElementById('ch-del'),countBy(rows,'delivery_status',['delivered','in_transit','pending','awaiting','cancelled']),{colorFn:k=>DEL_COLOR[k]||C.blue});
+  barChart(document.getElementById('ch-price'),priceHistogram(rows),{color:C.violet});
+  barChart(document.getElementById('ch-state'),countBy(rows,'state').slice(0,10),{horizontal:true,color:C.blue});
+  renderTable(rows);
+}
+
+/* ---------- quarantine table ---------- */
+function renderQuarantine(){
+  document.getElementById('qbody').innerHTML=quarantine.map(q=>
+    `<tr><td class="num">${q.sale_id}</td><td>${esc(q.column)}</td><td class="muted">${esc(q.raw_value)}</td><td class="reason">${esc(q.reason)}</td></tr>`
+  ).join('');
+}
+
+/* ---------- init ---------- */
+function init(){
+  document.getElementById('m-rows').textContent='1 venda / linha';
+  document.getElementById('foot-stamp').textContent='base: '+clean.length+' linhas · quarentena: '+quarantine.length+' campos';
+  fillSelect('f-line','Linha (todas)',distinct('model_line'));
+  fillSelect('f-pay','Pagamento (todos)',distinct('payment_method'));
+  fillSelect('f-del','Entrega (todas)',distinct('delivery_status'));
+  fillSelect('f-state','UF (todas)',distinct('state'));
+  const bind=(id,fn)=>document.getElementById(id).addEventListener('input',e=>{fn(e.target.value);render();});
+  bind('q',v=>F.q=v);bind('f-line',v=>F.line=v);bind('f-pay',v=>F.pay=v);bind('f-del',v=>F.del=v);bind('f-state',v=>F.state=v);
+  document.getElementById('c-quar').addEventListener('change',e=>{F.quar=e.target.checked;document.getElementById('t-quar').classList.toggle('on',e.target.checked);render();});
+  document.getElementById('c-susp').addEventListener('change',e=>{F.susp=e.target.checked;document.getElementById('t-susp').classList.toggle('on',e.target.checked);render();});
+  document.getElementById('reset').addEventListener('click',()=>{
+    Object.assign(F,{q:'',line:'',pay:'',del:'',state:'',quar:false,susp:false});
+    ['q','f-line','f-pay','f-del','f-state'].forEach(id=>document.getElementById(id).value='');
+    ['c-quar','c-susp'].forEach(id=>document.getElementById(id).checked=false);
+    document.querySelectorAll('.toggle').forEach(t=>t.classList.remove('on'));
+    render();
+  });
+  renderQuarantine();
+  render();
+}
+init();
+</script>
+</body>
+</html>
